@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prisma LabPixel — Batch Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111114;
+    --surface2: #18181d;
+    --border: #2a2a32;
+    --border-glow: #4a4a5a;
+    --silver: #c8ccd8;
+    --silver-bright: #e8ecf4;
+    --silver-dim: #7a7d8a;
+    --accent-r: #ff3b3b;
+    --accent-o: #ff8c00;
+    --accent-y: #ffd700;
+    --accent-g: #44dd88;
+    --accent-b: #3b9eff;
+    --accent-v: #a855f7;
+    --rainbow: linear-gradient(90deg, #ff3b3b, #ff8c00, #ffd700, #44dd88, #3b9eff, #a855f7);
+    --text: #d4d8e8;
+    --text-dim: #6b6e7c;
+    --radius: 10px;
+    --font-head: 'Rajdhani', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE TEXTURE ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: .4;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ─── HEADER ─── */
+  header { text-align: center; padding: 40px 0 48px; }
+  .logo-mark {
+    display: inline-flex; align-items: center; gap: 14px;
+    margin-bottom: 10px;
+  }
+  .logo-prism {
+    width: 52px; height: 52px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 30px rgba(59,158,255,.12);
+  }
+  .logo-prism svg { width: 36px; height: 36px; }
+  .logo-text { text-align: left; }
+  .logo-text h1 {
+    font-family: var(--font-head);
+    font-size: 32px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--silver-bright) 30%, var(--silver-dim));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .logo-text span {
+    font-family: var(--font-head);
+    font-size: 11px; letter-spacing: 5px;
+    color: var(--silver-dim); text-transform: uppercase;
+    display: block; margin-top: 2px;
+  }
+  .rainbow-bar {
+    width: 200px; height: 2px; margin: 0 auto 20px;
+    background: var(--rainbow);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(255,200,0,.3);
+  }
+  header p {
+    font-size: 13px; color: var(--text-dim); letter-spacing: .5px;
+  }
+
+  /* ─── API CONFIG MODAL ─── */
+  .api-bar {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 16px;
+    margin-bottom: 28px;
+  }
+  .api-bar label {
+    font-family: var(--font-head); font-weight: 600;
+    font-size: 13px; letter-spacing: 1px; color: var(--silver-dim);
+    white-space: nowrap; text-transform: uppercase;
+  }
+  .api-bar input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 12px; color: var(--silver);
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    letter-spacing: .5px;
+    transition: border-color .2s;
+  }
+  .api-bar input:focus { border-color: var(--accent-b); }
+  .api-bar input::placeholder { color: var(--text-dim); }
+  .btn-sm {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--silver); border-radius: 6px; padding: 8px 14px;
+    font-family: var(--font-head); font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+    transition: all .2s; white-space: nowrap;
+  }
+  .btn-sm:hover { border-color: var(--silver-dim); color: var(--silver-bright); }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border-glow);
+    transition: background .3s;
+    flex-shrink: 0;
+  }
+  .status-dot.ok { background: var(--accent-g); box-shadow: 0 0 8px var(--accent-g); }
+  .status-dot.err { background: var(--accent-r); }
+
+  /* ─── SECTIONS ─── */
+  .section-label {
+    font-family: var(--font-head); font-size: 11px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+
+  /* ─── DROP ZONE ─── */
+  .drop-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 48px 24px;
+    text-align: center; cursor: pointer;
+    transition: all .25s;
+    position: relative; overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent-b);
+    background: rgba(59,158,255,.04);
+    box-shadow: inset 0 0 40px rgba(59,158,255,.06);
+  }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-icon { font-size: 36px; margin-bottom: 12px; opacity: .6; }
+  .drop-zone h3 {
+    font-family: var(--font-head); font-size: 18px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--silver);
+    margin-bottom: 6px;
+  }
+  .drop-zone p { font-size: 12px; color: var(--text-dim); }
+  .drop-zone .formats { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-family: var(--font-head); letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 4px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-dim); text-transform: uppercase;
+  }
+
+  /* ─── THUMBNAILS GRID ─── */
+  .thumbs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .thumb-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; position: relative;
+    aspect-ratio: 1; cursor: pointer;
+    transition: border-color .2s, transform .15s;
+  }
+  .thumb-card:hover { border-color: var(--border-glow); transform: scale(1.02); }
+  .thumb-card.selected { border-color: var(--accent-b); box-shadow: 0 0 12px rgba(59,158,255,.2); }
+  .thumb-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb-card .thumb-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,.75); padding: 4px 6px;
+    font-size: 10px; color: var(--silver-dim); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .thumb-card .thumb-remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,.6); border: 1px solid var(--border);
+    color: var(--silver-dim); font-size: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s;
+  }
+  .thumb-card:hover .thumb-remove { opacity: 1; }
+  .thumb-card .thumb-status {
+    position: absolute; top: 4px; left: 4px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+  }
+  .thumb-card.processing .thumb-status {
+    background: var(--accent-y);
+    animation: pulse 1s infinite;
+  }
+  .thumb-card.done .thumb-status { background: var(--accent-g); }
+  .thumb-card.error .thumb-status { background: var(--accent-r); }
+
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* ─── CONTROLS PANEL ─── */
+  .controls-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-bottom: 28px;
+  }
+  @media(max-width:600px){ .controls-grid { grid-template-columns: 1fr; } }
+
+  .control-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+  }
+  .control-card h4 {
+    font-family: var(--font-head); font-size: 13px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim);
+    margin-bottom: 14px;
+  }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 11px; color: var(--text-dim);
+    margin-bottom: 5px; letter-spacing: .5px;
+  }
+  .field select, .field input[type=text], .field input[type=number], .field textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; color: var(--silver);
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    transition: border-color .2s; appearance: none;
+  }
+  .field select:focus, .field input:focus, .field textarea:focus { border-color: var(--accent-b); }
+  .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+  .field select option { background: #111; }
+
+  /* ─── PROMPT AREA ─── */
+  .prompt-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+    margin-bottom: 28px;
+  }
+  .prompt-card h4 {
+    font-family: var(--font-head); font-size: 13px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim);
+    margin-bottom: 14px;
+  }
+  .prompt-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset-btn {
+    font-size: 11px; font-family: var(--font-head); letter-spacing: .5px;
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer; transition: all .15s;
+    text-transform: uppercase;
+  }
+  .preset-btn:hover { border-color: var(--accent-b); color: var(--silver); }
+
+  /* ─── ACTION BUTTONS ─── */
+  .actions { display: flex; gap: 12px; margin-bottom: 28px; }
+  .btn-primary {
+    flex: 1; padding: 14px 24px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid var(--accent-b);
+    border-radius: var(--radius);
+    color: var(--silver-bright);
+    font-family: var(--font-head); font-size: 15px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+    transition: all .25s;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(59,158,255,.15), rgba(168,85,247,.1));
+    opacity: 0; transition: opacity .25s;
+  }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(59,158,255,.2); transform: translateY(-1px); }
+  .btn-primary:disabled {
+    opacity: .4; cursor: not-allowed; transform: none;
+    border-color: var(--border);
+  }
+  .btn-download {
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--accent-g);
+    border-radius: var(--radius);
+    color: var(--accent-g);
+    font-family: var(--font-head); font-size: 13px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+    transition: all .25s; white-space: nowrap;
+  }
+  .btn-download:hover { background: rgba(68,221,136,.08); box-shadow: 0 0 16px rgba(68,221,136,.2); }
+  .btn-download:disabled { opacity: .3; cursor: not-allowed; }
+
+  /* ─── PROGRESS ─── */
+  .progress-section { margin-bottom: 28px; display: none; }
+  .progress-section.visible { display: block; }
+  .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .progress-header span {
+    font-family: var(--font-head); font-size: 12px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--silver-dim);
+  }
+  .progress-track {
+    height: 4px; background: var(--surface2); border-radius: 2px;
+    overflow: hidden; margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--rainbow);
+    transition: width .3s ease;
+    width: 0%;
+  }
+  .log-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+    max-height: 180px; overflow-y: auto;
+    font-family: 'Courier New', monospace; font-size: 11px;
+    color: var(--text-dim); line-height: 1.8;
+  }
+  .log-box .log-ok { color: var(--accent-g); }
+  .log-box .log-err { color: var(--accent-r); }
+  .log-box .log-info { color: var(--accent-b); }
+
+  /* ─── RESULTS GRID ─── */
+  .results-section { display: none; }
+  .results-section.visible { display: block; }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .result-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    transition: border-color .2s, transform .15s;
+  }
+  .result-card:hover { border-color: var(--accent-g); transform: translateY(-2px); }
+  .result-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .result-card-info { padding: 8px 10px; }
+  .result-card-info p {
+    font-size: 10px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 6px;
+  }
+  .result-card-info button {
+    width: 100%; padding: 5px;
+    background: rgba(68,221,136,.1); border: 1px solid var(--accent-g);
+    border-radius: 4px; color: var(--accent-g);
+    font-family: var(--font-head); font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: all .15s;
+  }
+  .result-card-info button:hover { background: rgba(68,221,136,.2); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
+    z-index: 100; display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 32px; width: 100%; max-width: 440px;
+    margin: 20px; position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 0 1px var(--border);
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; transition: color .15s;
+  }
+  .modal-close:hover { color: var(--silver); }
+  .modal h2 {
+    font-family: var(--font-head); font-size: 22px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--silver-bright);
+    margin-bottom: 6px;
+  }
+  .modal p { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+  .modal p a { color: var(--accent-b); text-decoration: none; }
+  .modal p a:hover { text-decoration: underline; }
+  .modal-field label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; letter-spacing: .5px; }
+  .modal-field input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; color: var(--silver);
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    letter-spacing: 1px;
+    transition: border-color .2s;
+    margin-bottom: 16px;
+  }
+  .modal-field input:focus { border-color: var(--accent-b); }
+  .btn-modal-save {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, rgba(59,158,255,.15), rgba(168,85,247,.1));
+    border: 1px solid var(--accent-b);
+    border-radius: 8px; color: var(--silver-bright);
+    font-family: var(--font-head); font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-modal-save:hover { box-shadow: 0 0 20px rgba(59,158,255,.25); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-glow); }
+
+  /* ─── RAINBOW ANIMATION ─── */
+  @keyframes rainbowShift {
+    0%{background-position:0% 50%} 100%{background-position:200% 50%}
+  }
+  .rainbow-bar { background-size: 200%; animation: rainbowShift 4s linear infinite; }
+
+  /* ─── EMPTY STATE ─── */
+  .empty { text-align: center; padding: 32px; color: var(--text-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>API Config</h2>
+    <p>
+      Insira sua chave da <strong style="color:var(--silver)">Seedream API</strong> para ativar o agente de edição em lote.<br>
+      Obtenha sua chave em <a href="https://platform.siliconflow.cn" target="_blank">platform.siliconflow.cn</a><br><br>
+      <em>A chave é salva localmente no seu navegador e nunca é enviada a terceiros.</em>
+    </p>
+    <div class="modal-field">
+      <label>ENDPOINT BASE URL</label>
+      <input type="text" id="apiEndpoint" placeholder="https://api.siliconflow.cn/v1" value="https://api.siliconflow.cn/v1">
+      <label>SECRET API KEY</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-••••••••••••••••••••••••">
+    </div>
+    <button class="btn-modal-save" onclick="saveApiKey()">Salvar &amp; Conectar</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-mark">
+      <div class="logo-prism">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Polaroid frame -->
+          <rect x="5" y="4" width="26" height="28" rx="2" fill="#1e1e28" stroke="#444455" stroke-width="1"/>
+          <rect x="7" y="6" width="22" height="18" rx="1" fill="#0a0a14"/>
+          <!-- stars -->
+          <circle cx="14" cy="12" r=".8" fill="white" opacity=".8"/>
+          <circle cx="20" cy="9" r=".5" fill="white" opacity=".6"/>
+          <circle cx="25" cy="14" r=".6" fill="white" opacity=".7"/>
+          <circle cx="10" cy="16" r=".4" fill="white" opacity=".5"/>
+          <!-- rainbow strip -->
+          <defs>
+            <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ff3b3b"/>
+              <stop offset="25%" stop-color="#ffd700"/>
+              <stop offset="50%" stop-color="#44dd88"/>
+              <stop offset="75%" stop-color="#3b9eff"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+          </defs>
+          <rect x="7" y="24" width="22" height="4" rx="1" fill="url(#rg)" opacity=".9"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>PRISMA</h1>
+        <span>— LABPIXEL —</span>
+      </div>
+    </div>
+    <div class="rainbow-bar"></div>
+    <p>Agente de Edição em Lote · Seedream 4.5 · Export 5000px 300dpi</p>
+  </header>
+
+  <!-- API BAR -->
+  <div class="api-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <label>API</label>
+    <input type="password" id="apiKeyDisplay" placeholder="Chave não configurada — clique em Configurar" readonly>
+    <button class="btn-sm" onclick="openModal()">Configurar</button>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div class="section-label">01 &nbsp; Imagens</div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+    <div class="drop-icon">🖼️</div>
+    <h3>Soltar Imagens Aqui</h3>
+    <p>Ou clique para selecionar arquivos</p>
+    <div class="formats">
+      <span class="tag">JPG</span><span class="tag">PNG</span>
+      <span class="tag">WEBP</span><span class="tag">TIFF</span>
+      <span class="tag">BMP</span>
+    </div>
+  </div>
+
+  <!-- THUMBS -->
+  <div class="thumbs-grid" id="thumbsGrid"></div>
+
+  <!-- CONTROLS -->
+  <div class="section-label">02 &nbsp; Parâmetros de Edição</div>
+  <div class="controls-grid">
+    <div class="control-card">
+      <h4>Imagem</h4>
+      <div class="field">
+        <label>Modelo</label>
+        <select id="modelSelect">
+          <option value="Pro/FLUX.1-dev">Seedream 4.5 Pro (FLUX.1-dev)</option>
+          <option value="black-forest-labs/FLUX.1-schnell">FLUX.1-schnell (rápido)</option>
+          <option value="stabilityai/stable-diffusion-3-5-large">SD 3.5 Large</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Modo de Edição</label>
+        <select id="editMode">
+          <option value="img2img">img2img — Reestilizar</option>
+          <option value="enhance">Enhancer — Melhorar qualidade</option>
+          <option value="relight">Relight — Iluminação</option>
+          <option value="bg_remove">Remover Fundo</option>
+          <option value="upscale">Upscale apenas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Força do Prompt (0.1 – 1.0)</label>
+        <input type="number" id="strength" value="0.65" min="0.1" max="1.0" step="0.05">
+      </div>
+      <div class="field">
+        <label>Guidance Scale</label>
+        <input type="number" id="guidance" value="7.5" min="1" max="20" step="0.5">
+      </div>
+    </div>
+    <div class="control-card">
+      <h4>Export</h4>
+      <div class="field">
+        <label>Largura alvo (px)</label>
+        <input type="number" id="outWidth" value="5000" min="512" max="8192" step="64">
+      </div>
+      <div class="field">
+        <label>Altura alvo (px)</label>
+        <input type="number" id="outHeight" value="5000" min="512" max="8192" step="64">
+      </div>
+      <div class="field">
+        <label>DPI</label>
+        <input type="number" id="dpiVal" value="300" min="72" max="600" step="1">
+      </div>
+      <div class="field">
+        <label>Qualidade JPG (1–100)</label>
+        <input type="number" id="jpgQuality" value="95" min="1" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Steps de inferência</label>
+        <input type="number" id="steps" value="28" min="1" max="50" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- PROMPT -->
+  <div class="section-label">03 &nbsp; Prompt Criativo</div>
+  <div class="prompt-card">
+    <h4>Instrução de Edição</h4>
+    <div class="prompt-presets" id="presets"></div>
+    <div class="field">
+      <label>Prompt Positivo</label>
+      <textarea id="promptPos" placeholder="Ex: editorial fashion photography, dramatic cinematic lighting, ultra sharp, 8K resolution, professional retouching..."></textarea>
+    </div>
+    <div class="field">
+      <label>Prompt Negativo</label>
+      <textarea id="promptNeg" rows="2" placeholder="blur, noise, low quality, watermark, overexposed, artifacts...">blur, noise, low quality, watermark, overexposed, underexposed, artifacts, pixelated, distorted</textarea>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn-primary" id="runBtn" onclick="runBatch()" disabled>
+      ▶ &nbsp; Processar Lote
+    </button>
+    <button class="btn-download" id="dlAllBtn" onclick="downloadAll()" disabled>
+      ↓ &nbsp; Baixar Tudo
+    </button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-section" id="progressSection">
+    <div class="progress-header">
+      <span>Progresso</span>
+      <span id="progressLabel">0 / 0</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section" id="resultsSection">
+    <div class="section-label">04 &nbsp; Resultados</div>
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let apiKey = '';
+let apiEndpoint = 'https://api.siliconflow.cn/v1';
+let files = [];
+let results = [];
+let isRunning = false;
+
+const PRESETS = [
+  { label: 'Fashion', prompt: 'editorial fashion photography, dramatic cinematic lighting, ultra sharp, professional retouching, luxury aesthetic, 8K resolution' },
+  { label: 'Produto', prompt: 'professional product photography, clean white background, soft studio lighting, commercial quality, ultra sharp details' },
+  { label: 'Retrato', prompt: 'portrait photography, soft bokeh background, golden hour lighting, skin texture retouched, magazine quality' },
+  { label: 'Arquitetura', prompt: 'architectural photography, blue hour, dramatic sky, HDR details, ultra sharp lines, professional' },
+  { label: 'Nature', prompt: 'nature photography, golden hour, vibrant colors, ultra sharp, professional wildlife photography' },
+  { label: 'Cinemático', prompt: 'cinematic color grading, film grain, anamorphic lens, dramatic shadows, Hollywood quality' },
+];
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  loadStoredKey();
+  buildPresets();
+  setupDrop();
+});
+
+function loadStoredKey() {
+  const k = localStorage.getItem('prisma_api_key');
+  const e = localStorage.getItem('prisma_api_endpoint');
+  if (k) {
+    apiKey = k;
+    if (e) { apiEndpoint = e; document.getElementById('apiEndpoint').value = e; }
+    document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-6);
+    document.getElementById('statusDot').classList.add('ok');
+    checkRunBtn();
+  }
+}
+
+function buildPresets() {
+  const c = document.getElementById('presets');
+  PRESETS.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'preset-btn';
+    b.textContent = p.label;
+    b.onclick = () => { document.getElementById('promptPos').value = p.prompt; };
+    c.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════
+function openModal() { document.getElementById('apiModal').classList.add('open'); }
+function closeModal() { document.getElementById('apiModal').classList.remove('open'); }
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  const e = document.getElementById('apiEndpoint').value.trim();
+  if (!k) { alert('Insira uma chave válida'); return; }
+  apiKey = k;
+  apiEndpoint = e || 'https://api.siliconflow.cn/v1';
+  localStorage.setItem('prisma_api_key', k);
+  localStorage.setItem('prisma_api_endpoint', apiEndpoint);
+  document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-6);
+  document.getElementById('statusDot').classList.add('ok');
+  closeModal();
+  checkRunBtn();
+  log('API configurada com sucesso', 'ok');
+}
+
+// ═══════════════════════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════════════════════
+function setupDrop() {
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+}
+
+function handleFiles(fileList) {
+  const newFiles = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  files.push(...newFiles);
+  renderThumbs();
+  checkRunBtn();
+}
+
+function renderThumbs() {
+  const grid = document.getElementById('thumbsGrid');
+  grid.innerHTML = '';
+  files.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const card = document.createElement('div');
+    card.className = 'thumb-card';
+    card.id = `thumb-${i}`;
+    card.innerHTML = `
+      <img src="${url}" alt="${f.name}">
+      <div class="thumb-status"></div>
+      <div class="thumb-name">${f.name}</div>
+      <div class="thumb-remove" onclick="removeFile(${i})">✕</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function removeFile(i) {
+  files.splice(i, 1);
+  renderThumbs();
+  checkRunBtn();
+}
+
+function checkRunBtn() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = !(apiKey && files.length > 0 && !isRunning);
+}
+
+// ═══════════════════════════════════════════════════
+//  LOGGING
+// ═══════════════════════════════════════════════════
+function log(msg, type = 'info') {
+  const box = document.getElementById('logBox');
+  const d = document.createElement('div');
+  d.className = `log-${type}`;
+  const t = new Date().toLocaleTimeString('pt-BR');
+  d.textContent = `[${t}] ${msg}`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  document.getElementById('progressSection').classList.add('visible');
+}
+
+// ═══════════════════════════════════════════════════
+//  BATCH PROCESSING
+// ═══════════════════════════════════════════════════
+async function runBatch() {
+  if (isRunning || !apiKey || !files.length) return;
+  isRunning = true;
+  results = [];
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('dlAllBtn').disabled = true;
+  document.getElementById('resultsSection').classList.remove('visible');
+  document.getElementById('resultsGrid').innerHTML = '';
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('progressFill').style.width = '0%';
+
+  const total = files.length;
+  log(`Iniciando lote: ${total} imagem(ns)`, 'info');
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const card = document.getElementById(`thumb-${i}`);
+    if (card) card.classList.add('processing');
+
+    log(`[${i+1}/${total}] Processando: ${f.name}`, 'info');
+
+    try {
+      const result = await processImage(f, i);
+      results.push({ name: f.name, blob: result, index: i });
+      if (card) { card.classList.remove('processing'); card.classList.add('done'); }
+      log(`[${i+1}/${total}] ✓ ${f.name} concluído`, 'ok');
+      addResult(result, f.name, i);
+    } catch (err) {
+      if (card) { card.classList.remove('processing'); card.classList.add('error'); }
+      log(`[${i+1}/${total}] ✗ ${f.name}: ${err.message}`, 'err');
+    }
+
+    // progress
+    const pct = Math.round(((i + 1) / total) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `${i+1} / ${total}`;
+  }
+
+  isRunning = false;
+  checkRunBtn();
+  if (results.length) {
+    document.getElementById('dlAllBtn').disabled = false;
+    document.getElementById('resultsSection').classList.add('visible');
+    log(`Lote concluído! ${results.length} imagem(ns) prontas.`, 'ok');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  API CALL
+// ═══════════════════════════════════════════════════
+async function processImage(file, idx) {
+  const model     = document.getElementById('modelSelect').value;
+  const editMode  = document.getElementById('editMode').value;
+  const promptPos = document.getElementById('promptPos').value.trim() || 'high quality, professional photography, ultra sharp';
+  const promptNeg = document.getElementById('promptNeg').value.trim();
+  const strength  = parseFloat(document.getElementById('strength').value);
+  const guidance  = parseFloat(document.getElementById('guidance').value);
+  const steps     = parseInt(document.getElementById('steps').value);
+
+  // Convert file to base64
+  const b64 = await fileToBase64(file);
+
+  // Build payload — img2img style (SiliconFlow / FLUX)
+  const payload = {
+    model: model,
+    prompt: promptPos,
+    negative_prompt: promptNeg,
+    image: b64,
+    image_size: '1024x1024',
+    num_inference_steps: steps,
+    guidance_scale: guidance,
+    strength: strength,
+    num_images: 1,
+    seed: Math.floor(Math.random() * 9999999),
+  };
+
+  const resp = await fetch(`${apiEndpoint}/images/generations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!resp.ok) {
+    const errTxt = await resp.text();
+    throw new Error(`API ${resp.status}: ${errTxt.slice(0, 120)}`);
+  }
+
+  const data = await resp.json();
+  const imgUrl = data?.images?.[0]?.url || data?.data?.[0]?.url || null;
+  if (!imgUrl) throw new Error('Resposta sem URL de imagem');
+
+  // Fetch the image
+  const imgResp = await fetch(imgUrl);
+  const imgBlob = await imgResp.blob();
+
+  // Upscale & set DPI via canvas
+  const finalBlob = await upscaleAndExport(imgBlob);
+  return finalBlob;
+}
+
+// ═══════════════════════════════════════════════════
+//  UPSCALE + DPI BAKING
+// ═══════════════════════════════════════════════════
+function upscaleAndExport(blob) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const targetW = parseInt(document.getElementById('outWidth').value);
+      const targetH = parseInt(document.getElementById('outHeight').value);
+      const dpi = parseInt(document.getElementById('dpiVal').value);
+      const quality = parseInt(document.getElementById('jpgQuality').value) / 100;
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+
+      // Fill white (for JPEG transparency handling)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, targetW, targetH);
+
+      // Draw upscaled
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob(outBlob => {
+        if (!outBlob) { reject(new Error('Canvas export failed')); return; }
+        // Inject DPI into JPEG EXIF (APP0 / JFIF)
+        injectDPI(outBlob, dpi).then(resolve).catch(reject);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => reject(new Error('Falha ao carregar imagem para upscale'));
+    img.src = url;
+  });
+}
+
+// Inject DPI into JPEG JFIF APP0 header
+async function injectDPI(blob, dpi) {
+  const buf = await blob.arrayBuffer();
+  const arr = new Uint8Array(buf);
+
+  // Find JFIF APP0 marker (FF E0)
+  let app0Start = -1;
+  for (let i = 0; i < arr.length - 1; i++) {
+    if (arr[i] === 0xFF && arr[i+1] === 0xE0) { app0Start = i; break; }
+  }
+
+  if (app0Start !== -1 && arr[app0Start + 11] !== undefined) {
+    // Byte 11 = units (1=DPI), 12-13 = X density, 14-15 = Y density
+    arr[app0Start + 11] = 1; // units = DPI
+    arr[app0Start + 12] = (dpi >> 8) & 0xFF;
+    arr[app0Start + 13] = dpi & 0xFF;
+    arr[app0Start + 14] = (dpi >> 8) & 0xFF;
+    arr[app0Start + 15] = dpi & 0xFF;
+  }
+
+  return new Blob([arr], { type: 'image/jpeg' });
+}
+
+// ═══════════════════════════════════════════════════
+//  RESULTS
+// ═══════════════════════════════════════════════════
+function addResult(blob, name, idx) {
+  const grid = document.getElementById('resultsGrid');
+  const url  = URL.createObjectURL(blob);
+  const outName = name.replace(/\.[^.]+$/, '') + '_prisma_5000px.jpg';
+
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.innerHTML = `
+    <img src="${url}" alt="${name}" loading="lazy">
+    <div class="result-card-info">
+      <p>${outName}</p>
+      <button onclick="downloadSingle('${url}','${outName}')">↓ Baixar JPG</button>
+    </div>
+  `;
+  grid.appendChild(card);
+}
+
+function downloadSingle(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+async function downloadAll() {
+  if (!results.length) return;
+  log(`Iniciando download de ${results.length} arquivo(s)...`, 'info');
+
+  for (const r of results) {
+    const url = URL.createObjectURL(r.blob);
+    const outName = r.name.replace(/\.[^.]+$/, '') + '_prisma_5000px.jpg';
+    downloadSingle(url, outName);
+    await new Promise(res => setTimeout(res, 400)); // stagger
+    URL.revokeObjectURL(url);
+  }
+  log('✓ Todos os arquivos baixados!', 'ok');
+}
+
+// ═══════════════════════════════════════════════════
+//  UTIL
+// ═══════════════════════════════════════════════════
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+</script>
+</body>
+</html>
