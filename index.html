@@ -3,482 +3,277 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prisma LabPixel — Batch Agent</title>
+<title>Prisma LabPixel — Batch Agent · GPT-5.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0b;
-    --surface: #111114;
-    --surface2: #18181d;
-    --border: #2a2a32;
-    --border-glow: #4a4a5a;
-    --silver: #c8ccd8;
-    --silver-bright: #e8ecf4;
-    --silver-dim: #7a7d8a;
-    --accent-r: #ff3b3b;
-    --accent-o: #ff8c00;
-    --accent-y: #ffd700;
-    --accent-g: #44dd88;
-    --accent-b: #3b9eff;
-    --accent-v: #a855f7;
-    --rainbow: linear-gradient(90deg, #ff3b3b, #ff8c00, #ffd700, #44dd88, #3b9eff, #a855f7);
-    --text: #d4d8e8;
-    --text-dim: #6b6e7c;
-    --radius: 10px;
-    --font-head: 'Rajdhani', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --bg:           #0a0a0b;
+    --surface:      #111114;
+    --surface2:     #18181d;
+    --border:       #2a2a32;
+    --border-glow:  #4a4a5a;
+    --silver:       #c8ccd8;
+    --silver-bright:#e8ecf4;
+    --silver-dim:   #7a7d8a;
+    --accent-g:     #44dd88;
+    --accent-b:     #3b9eff;
+    --accent-y:     #ffd700;
+    --accent-r:     #ff4d4d;
+    --rainbow:      linear-gradient(90deg,#ff3b3b,#ff8c00,#ffd700,#44dd88,#3b9eff,#a855f7);
+    --text:         #d4d8e8;
+    --text-dim:     #6b6e7c;
+    --radius:       10px;
+    --fh:           'Rajdhani', sans-serif;
+    --fb:           'Inter', sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
 
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    min-height: 100vh;
-    overflow-x: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: var(--fb); font-size: 14px;
+    min-height: 100vh; overflow-x: hidden;
   }
-
-  /* ─── NOISE TEXTURE ─── */
   body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0; opacity: .4;
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity: .5;
   }
 
-  /* ─── LAYOUT ─── */
   .app { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
 
-  /* ─── HEADER ─── */
-  header { text-align: center; padding: 40px 0 48px; }
-  .logo-mark {
-    display: inline-flex; align-items: center; gap: 14px;
-    margin-bottom: 10px;
-  }
+  /* HEADER */
+  header { text-align: center; padding: 40px 0 44px; }
+  .logo-mark { display: inline-flex; align-items: center; gap: 14px; margin-bottom: 10px; }
   .logo-prism {
-    width: 52px; height: 52px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    width: 52px; height: 52px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
-    box-shadow: 0 0 30px rgba(59,158,255,.12);
+    box-shadow: 0 0 30px rgba(59,158,255,.1);
   }
   .logo-prism svg { width: 36px; height: 36px; }
-  .logo-text { text-align: left; }
   .logo-text h1 {
-    font-family: var(--font-head);
-    font-size: 32px; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase;
+    font-family: var(--fh); font-size: 32px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase; line-height: 1;
     background: linear-gradient(135deg, var(--silver-bright) 30%, var(--silver-dim));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
   .logo-text span {
-    font-family: var(--font-head);
-    font-size: 11px; letter-spacing: 5px;
-    color: var(--silver-dim); text-transform: uppercase;
-    display: block; margin-top: 2px;
+    font-family: var(--fh); font-size: 11px; letter-spacing: 5px;
+    color: var(--silver-dim); text-transform: uppercase; display: block; margin-top: 2px;
   }
   .rainbow-bar {
-    width: 200px; height: 2px; margin: 0 auto 20px;
-    background: var(--rainbow);
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(255,200,0,.3);
+    width: 200px; height: 2px; margin: 0 auto 18px;
+    background: var(--rainbow); background-size: 200%;
+    border-radius: 2px; animation: rainbowShift 4s linear infinite;
   }
-  header p {
-    font-size: 13px; color: var(--text-dim); letter-spacing: .5px;
-  }
+  @keyframes rainbowShift { 0%{background-position:0%} 100%{background-position:200%} }
+  header p { font-size: 12px; color: var(--text-dim); letter-spacing: .4px; }
 
-  /* ─── API CONFIG MODAL ─── */
-  .api-bar {
-    display: flex; gap: 10px; align-items: center;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 16px;
-    margin-bottom: 28px;
-  }
-  .api-bar label {
-    font-family: var(--font-head); font-weight: 600;
-    font-size: 13px; letter-spacing: 1px; color: var(--silver-dim);
-    white-space: nowrap; text-transform: uppercase;
-  }
-  .api-bar input {
-    flex: 1; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 6px; padding: 8px 12px; color: var(--silver);
-    font-family: var(--font-body); font-size: 13px; outline: none;
-    letter-spacing: .5px;
-    transition: border-color .2s;
-  }
-  .api-bar input:focus { border-color: var(--accent-b); }
-  .api-bar input::placeholder { color: var(--text-dim); }
-  .btn-sm {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--silver); border-radius: 6px; padding: 8px 14px;
-    font-family: var(--font-head); font-size: 12px; font-weight: 600;
-    letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-    transition: all .2s; white-space: nowrap;
-  }
-  .btn-sm:hover { border-color: var(--silver-dim); color: var(--silver-bright); }
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--border-glow);
-    transition: background .3s;
-    flex-shrink: 0;
-  }
-  .status-dot.ok { background: var(--accent-g); box-shadow: 0 0 8px var(--accent-g); }
-  .status-dot.err { background: var(--accent-r); }
-
-  /* ─── SECTIONS ─── */
+  /* SECTION LABEL */
   .section-label {
-    font-family: var(--font-head); font-size: 11px; letter-spacing: 3px;
+    font-family: var(--fh); font-size: 11px; letter-spacing: 3px;
     text-transform: uppercase; color: var(--text-dim);
     margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
   }
-  .section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* ─── DROP ZONE ─── */
+  /* API BAR */
+  .api-bar {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px;
+  }
+  .api-bar label { font-family: var(--fh); font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--silver-dim); white-space: nowrap; text-transform: uppercase; }
+  .api-bar input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--silver); font-family: var(--fb); font-size: 13px; outline: none; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-glow); transition: background .3s; flex-shrink: 0; }
+  .status-dot.ok  { background: var(--accent-g); box-shadow: 0 0 8px var(--accent-g); }
+  .status-dot.err { background: var(--accent-r); }
+  .btn-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--silver); border-radius: 6px; padding: 8px 14px; font-family: var(--fh); font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .btn-sm:hover { border-color: var(--silver-dim); color: var(--silver-bright); }
+
+  /* PROXY NOTICE */
+  .proxy-notice {
+    background: rgba(255,215,0,.06); border: 1px solid rgba(255,215,0,.2);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;
+    font-size: 12px; color: #c8a800; line-height: 1.8;
+  }
+  .proxy-notice code { color: var(--accent-b); background: rgba(59,158,255,.1); padding: 1px 5px; border-radius: 3px; }
+  .proxy-notice a { color: var(--accent-b); text-decoration: none; }
+  .proxy-notice a:hover { text-decoration: underline; }
+
+  /* DROP ZONE */
   .drop-zone {
-    border: 1.5px dashed var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    padding: 48px 24px;
-    text-align: center; cursor: pointer;
-    transition: all .25s;
-    position: relative; overflow: hidden;
-    margin-bottom: 28px;
+    border: 1.5px dashed var(--border); border-radius: var(--radius);
+    background: var(--surface); padding: 44px 24px;
+    text-align: center; cursor: pointer; transition: all .25s;
+    position: relative; overflow: hidden; margin-bottom: 20px;
   }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent-b);
-    background: rgba(59,158,255,.04);
-    box-shadow: inset 0 0 40px rgba(59,158,255,.06);
-  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent-b); background: rgba(59,158,255,.03); }
   .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .drop-icon { font-size: 36px; margin-bottom: 12px; opacity: .6; }
-  .drop-zone h3 {
-    font-family: var(--font-head); font-size: 18px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; color: var(--silver);
-    margin-bottom: 6px;
-  }
+  .drop-zone h3 { font-family: var(--fh); font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--silver); margin: 8px 0 6px; }
   .drop-zone p { font-size: 12px; color: var(--text-dim); }
-  .drop-zone .formats { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-  .tag {
-    font-size: 10px; font-family: var(--font-head); letter-spacing: 1px;
-    padding: 3px 8px; border-radius: 4px;
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text-dim); text-transform: uppercase;
-  }
+  .formats { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-family: var(--fh); letter-spacing: 1px; padding: 3px 8px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); text-transform: uppercase; }
 
-  /* ─── THUMBNAILS GRID ─── */
-  .thumbs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 28px;
-  }
-  .thumb-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; overflow: hidden; position: relative;
-    aspect-ratio: 1; cursor: pointer;
-    transition: border-color .2s, transform .15s;
-  }
+  /* THUMBS */
+  .thumbs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .thumb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; aspect-ratio: 1; transition: border-color .2s, transform .15s; }
   .thumb-card:hover { border-color: var(--border-glow); transform: scale(1.02); }
-  .thumb-card.selected { border-color: var(--accent-b); box-shadow: 0 0 12px rgba(59,158,255,.2); }
+  .thumb-card.selected { border-color: var(--accent-b); }
   .thumb-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .thumb-card .thumb-name {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: rgba(0,0,0,.75); padding: 4px 6px;
-    font-size: 10px; color: var(--silver-dim); white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-  }
-  .thumb-card .thumb-remove {
-    position: absolute; top: 4px; right: 4px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(0,0,0,.6); border: 1px solid var(--border);
-    color: var(--silver-dim); font-size: 10px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity .15s;
-  }
+  .thumb-card .thumb-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,.75); padding: 4px 6px; font-size: 10px; color: var(--silver-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thumb-card .thumb-remove { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,.6); border: 1px solid var(--border); color: var(--silver-dim); font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
   .thumb-card:hover .thumb-remove { opacity: 1; }
-  .thumb-card .thumb-status {
-    position: absolute; top: 4px; left: 4px;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--border);
-  }
-  .thumb-card.processing .thumb-status {
-    background: var(--accent-y);
-    animation: pulse 1s infinite;
-  }
-  .thumb-card.done .thumb-status { background: var(--accent-g); }
+  .thumb-card .thumb-status { position: absolute; top: 4px; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .thumb-card.processing .thumb-status { background: var(--accent-y); animation: pulse 1s infinite; }
+  .thumb-card.done  .thumb-status { background: var(--accent-g); }
   .thumb-card.error .thumb-status { background: var(--accent-r); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-
-  /* ─── CONTROLS PANEL ─── */
-  .controls-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-    margin-bottom: 28px;
-  }
-  @media(max-width:600px){ .controls-grid { grid-template-columns: 1fr; } }
-
-  .control-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px;
-  }
-  .control-card h4 {
-    font-family: var(--font-head); font-size: 13px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim);
-    margin-bottom: 14px;
-  }
+  /* CONTROLS */
+  .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media(max-width:580px){ .controls-grid { grid-template-columns: 1fr; } }
+  .control-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .control-card h4 { font-family: var(--fh); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim); margin-bottom: 14px; }
   .field { margin-bottom: 12px; }
-  .field label {
-    display: block; font-size: 11px; color: var(--text-dim);
-    margin-bottom: 5px; letter-spacing: .5px;
-  }
+  .field label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; letter-spacing: .5px; }
   .field select, .field input[type=text], .field input[type=number], .field textarea {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 6px; padding: 8px 10px; color: var(--silver);
-    font-family: var(--font-body); font-size: 13px; outline: none;
-    transition: border-color .2s; appearance: none;
+    font-family: var(--fb); font-size: 13px; outline: none; appearance: none;
+    transition: border-color .2s;
   }
   .field select:focus, .field input:focus, .field textarea:focus { border-color: var(--accent-b); }
-  .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   .field select option { background: #111; }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
-  /* ─── PROMPT AREA ─── */
-  .prompt-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px;
-    margin-bottom: 28px;
+  /* MODEL BADGE */
+  .model-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(59,158,255,.08); border: 1px solid rgba(59,158,255,.25);
+    border-radius: 20px; padding: 4px 12px; margin-bottom: 14px;
+    font-family: var(--fh); font-size: 12px; letter-spacing: 1px; color: var(--accent-b);
   }
-  .prompt-card h4 {
-    font-family: var(--font-head); font-size: 13px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim);
-    margin-bottom: 14px;
-  }
+  .model-badge::before { content: '◆'; font-size: 8px; }
+
+  /* PROMPT */
+  .prompt-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 24px; }
+  .prompt-card h4 { font-family: var(--fh); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--silver-dim); margin-bottom: 14px; }
   .prompt-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .preset-btn {
-    font-size: 11px; font-family: var(--font-head); letter-spacing: .5px;
-    padding: 4px 10px; border-radius: 20px;
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text-dim); cursor: pointer; transition: all .15s;
-    text-transform: uppercase;
-  }
+  .preset-btn { font-size: 11px; font-family: var(--fh); letter-spacing: .5px; padding: 4px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; transition: all .15s; text-transform: uppercase; }
   .preset-btn:hover { border-color: var(--accent-b); color: var(--silver); }
 
-  /* ─── ACTION BUTTONS ─── */
-  .actions { display: flex; gap: 12px; margin-bottom: 28px; }
+  /* ACTIONS */
+  .actions { display: flex; gap: 12px; margin-bottom: 24px; }
   .btn-primary {
     flex: 1; padding: 14px 24px;
     background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border: 1px solid var(--accent-b);
-    border-radius: var(--radius);
-    color: var(--silver-bright);
-    font-family: var(--font-head); font-size: 15px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
-    transition: all .25s;
-    position: relative; overflow: hidden;
+    border: 1px solid var(--accent-b); border-radius: var(--radius);
+    color: var(--silver-bright); font-family: var(--fh); font-size: 15px;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all .25s; position: relative; overflow: hidden;
   }
-  .btn-primary::before {
-    content:''; position:absolute; inset:0;
-    background: linear-gradient(135deg, rgba(59,158,255,.15), rgba(168,85,247,.1));
-    opacity: 0; transition: opacity .25s;
-  }
+  .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(59,158,255,.15),rgba(168,85,247,.1)); opacity: 0; transition: opacity .25s; }
   .btn-primary:hover::before { opacity: 1; }
   .btn-primary:hover { box-shadow: 0 0 20px rgba(59,158,255,.2); transform: translateY(-1px); }
-  .btn-primary:disabled {
-    opacity: .4; cursor: not-allowed; transform: none;
-    border-color: var(--border);
-  }
-  .btn-download {
-    padding: 14px 20px;
-    background: var(--surface);
-    border: 1px solid var(--accent-g);
-    border-radius: var(--radius);
-    color: var(--accent-g);
-    font-family: var(--font-head); font-size: 13px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
-    transition: all .25s; white-space: nowrap;
-  }
+  .btn-primary:disabled { opacity: .35; cursor: not-allowed; transform: none; border-color: var(--border); }
+  .btn-download { padding: 14px 20px; background: var(--surface); border: 1px solid var(--accent-g); border-radius: var(--radius); color: var(--accent-g); font-family: var(--fh); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all .25s; white-space: nowrap; }
   .btn-download:hover { background: rgba(68,221,136,.08); box-shadow: 0 0 16px rgba(68,221,136,.2); }
   .btn-download:disabled { opacity: .3; cursor: not-allowed; }
 
-  /* ─── PROGRESS ─── */
-  .progress-section { margin-bottom: 28px; display: none; }
+  /* PROGRESS */
+  .progress-section { margin-bottom: 24px; display: none; }
   .progress-section.visible { display: block; }
   .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-  .progress-header span {
-    font-family: var(--font-head); font-size: 12px; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--silver-dim);
-  }
-  .progress-track {
-    height: 4px; background: var(--surface2); border-radius: 2px;
-    overflow: hidden; margin-bottom: 12px;
-  }
-  .progress-fill {
-    height: 100%; border-radius: 2px;
-    background: var(--rainbow);
-    transition: width .3s ease;
-    width: 0%;
-  }
-  .log-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px;
-    max-height: 180px; overflow-y: auto;
-    font-family: 'Courier New', monospace; font-size: 11px;
-    color: var(--text-dim); line-height: 1.8;
-  }
-  .log-box .log-ok { color: var(--accent-g); }
-  .log-box .log-err { color: var(--accent-r); }
-  .log-box .log-info { color: var(--accent-b); }
+  .progress-header span { font-family: var(--fh); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--silver-dim); }
+  .progress-track { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+  .progress-fill { height: 100%; border-radius: 2px; background: var(--rainbow); background-size: 200%; animation: rainbowShift 3s linear infinite; transition: width .4s ease; width: 0%; }
+  .log-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-dim); line-height: 1.9; }
+  .log-ok   { color: var(--accent-g); }
+  .log-err  { color: var(--accent-r); }
+  .log-info { color: var(--accent-b); }
+  .log-warn { color: var(--accent-y); }
 
-  /* ─── RESULTS GRID ─── */
+  /* RESULTS */
   .results-section { display: none; }
   .results-section.visible { display: block; }
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px; margin-bottom: 20px;
-  }
-  .result-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; overflow: hidden;
-    transition: border-color .2s, transform .15s;
-  }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; margin-bottom: 20px; }
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s, transform .15s; }
   .result-card:hover { border-color: var(--accent-g); transform: translateY(-2px); }
   .result-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
   .result-card-info { padding: 8px 10px; }
-  .result-card-info p {
-    font-size: 10px; color: var(--text-dim);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 6px;
-  }
-  .result-card-info button {
-    width: 100%; padding: 5px;
-    background: rgba(68,221,136,.1); border: 1px solid var(--accent-g);
-    border-radius: 4px; color: var(--accent-g);
-    font-family: var(--font-head); font-size: 10px; letter-spacing: 1px;
-    text-transform: uppercase; cursor: pointer; transition: all .15s;
-  }
+  .result-card-info p { font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .result-card-info button { width: 100%; padding: 5px; background: rgba(68,221,136,.1); border: 1px solid var(--accent-g); border-radius: 4px; color: var(--accent-g); font-family: var(--fh); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .15s; }
   .result-card-info button:hover { background: rgba(68,221,136,.2); }
 
-  /* ─── MODAL ─── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
-    z-index: 100; display: none; align-items: center; justify-content: center;
-  }
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 32px; width: 100%; max-width: 440px;
-    margin: 20px; position: relative;
-    box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 0 1px var(--border);
-  }
-  .modal-close {
-    position: absolute; top: 14px; right: 16px;
-    background: none; border: none; color: var(--text-dim);
-    font-size: 18px; cursor: pointer; transition: color .15s;
-  }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 100%; max-width: 460px; margin: 20px; position: relative; box-shadow: 0 0 60px rgba(0,0,0,.6); }
+  .modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; transition: color .15s; }
   .modal-close:hover { color: var(--silver); }
-  .modal h2 {
-    font-family: var(--font-head); font-size: 22px; font-weight: 700;
-    letter-spacing: 3px; text-transform: uppercase; color: var(--silver-bright);
-    margin-bottom: 6px;
-  }
-  .modal p { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+  .modal h2 { font-family: var(--fh); font-size: 22px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--silver-bright); margin-bottom: 6px; }
+  .modal p { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.7; }
   .modal p a { color: var(--accent-b); text-decoration: none; }
-  .modal p a:hover { text-decoration: underline; }
+  .modal p strong { color: var(--silver); }
   .modal-field label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; letter-spacing: .5px; }
-  .modal-field input {
+  .modal-field input, .modal-field select {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 6px; padding: 10px 12px; color: var(--silver);
-    font-family: var(--font-body); font-size: 13px; outline: none;
-    letter-spacing: 1px;
-    transition: border-color .2s;
-    margin-bottom: 16px;
+    font-family: var(--fb); font-size: 13px; outline: none; appearance: none;
+    margin-bottom: 16px; transition: border-color .2s;
   }
-  .modal-field input:focus { border-color: var(--accent-b); }
-  .btn-modal-save {
-    width: 100%; padding: 12px;
-    background: linear-gradient(135deg, rgba(59,158,255,.15), rgba(168,85,247,.1));
-    border: 1px solid var(--accent-b);
-    border-radius: 8px; color: var(--silver-bright);
-    font-family: var(--font-head); font-size: 14px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
-    transition: all .2s;
-  }
+  .modal-field input:focus, .modal-field select:focus { border-color: var(--accent-b); }
+  .modal-field select option { background: #111; }
+  .btn-modal-save { width: 100%; padding: 12px; background: linear-gradient(135deg,rgba(59,158,255,.15),rgba(168,85,247,.1)); border: 1px solid var(--accent-b); border-radius: 8px; color: var(--silver-bright); font-family: var(--fh); font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all .2s; }
   .btn-modal-save:hover { box-shadow: 0 0 20px rgba(59,158,255,.25); }
 
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: var(--surface); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--border-glow); }
-
-  /* ─── RAINBOW ANIMATION ─── */
-  @keyframes rainbowShift {
-    0%{background-position:0% 50%} 100%{background-position:200% 50%}
-  }
-  .rainbow-bar { background-size: 200%; animation: rainbowShift 4s linear infinite; }
-
-  /* ─── EMPTY STATE ─── */
-  .empty { text-align: center; padding: 32px; color: var(--text-dim); font-size: 12px; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--surface); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<!-- API KEY MODAL -->
+<!-- ═══════════ MODAL ═══════════ -->
 <div class="modal-overlay" id="apiModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <h2>API Config</h2>
     <p>
-      Chave da <strong style="color:var(--silver)">Seedream API — BytePlus ModelArk</strong>.<br>
-      Obtenha em <a href="https://console.byteplus.com/ark/region:ark+ap-southeast-1/apiKey" target="_blank">console.byteplus.com → API Key</a><br><br>
-      <strong style="color:var(--accent-y)">⚠ Proxy obrigatório</strong> — a API BytePlus bloqueia chamadas diretas do browser (CORS).<br>
-      Deploy grátis do proxy em <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Workers</a> usando o arquivo <code style="color:var(--accent-b)">worker.js</code> incluído.<br>
-      <em style="color:var(--text-dim)">A chave fica salva apenas no seu navegador.</em>
+      Motor: <strong>OpenAI GPT-5.5</strong> com <strong>image_generation tool</strong>.<br>
+      Obtenha sua chave em <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a><br><br>
+      <strong style="color:var(--accent-y)">⚠ Proxy obrigatório</strong> — browsers bloqueiam chamadas diretas à OpenAI (CORS).<br>
+      Deploy gratuito via <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Workers</a> usando o arquivo <code style="color:var(--accent-b);font-size:11px">worker.js</code> incluso.<br>
+      <em>A chave fica salva apenas no seu navegador.</em>
     </p>
     <div class="modal-field">
-      <label>PROXY URL (Cloudflare Worker)</label>
-      <input type="text" id="proxyUrl" placeholder="https://prisma-proxy.SEU_USER.workers.dev/proxy" autocomplete="off">
-      <label>REGIÃO BYTEPLUS</label>
-      <select id="apiEndpoint" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--silver);font-family:var(--font-body);font-size:13px;outline:none;margin-bottom:16px;appearance:none;">
-        <option value="ap-southeast-1">ap-southeast-1 — Ásia/Pacífico (padrão)</option>
-        <option value="eu-west-1">eu-west-1 — Europa Ocidental</option>
-      </select>
-      <label>SECRET API KEY</label>
-      <input type="password" id="apiKeyInput" placeholder="••••••••••••••••••••••••••••••••">
+      <label>PROXY URL (Cloudflare Worker — termina em /proxy)</label>
+      <input type="text" id="proxyUrl" placeholder="https://prisma-proxy.SEU_USER.workers.dev/proxy">
+      <label>OPENAI API KEY</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-••••••••••••••••••••••••••••••">
     </div>
-    <button class="btn-modal-save" onclick="saveApiKey()">Salvar &amp; Conectar</button>
+    <button class="btn-modal-save" onclick="saveConfig()">Salvar &amp; Conectar</button>
   </div>
 </div>
 
+<!-- ═══════════ APP ═══════════ -->
 <div class="app">
 
-  <!-- HEADER -->
   <header>
     <div class="logo-mark">
       <div class="logo-prism">
         <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Polaroid frame -->
           <rect x="5" y="4" width="26" height="28" rx="2" fill="#1e1e28" stroke="#444455" stroke-width="1"/>
           <rect x="7" y="6" width="22" height="18" rx="1" fill="#0a0a14"/>
-          <!-- stars -->
           <circle cx="14" cy="12" r=".8" fill="white" opacity=".8"/>
-          <circle cx="20" cy="9" r=".5" fill="white" opacity=".6"/>
+          <circle cx="20" cy="9"  r=".5" fill="white" opacity=".6"/>
           <circle cx="25" cy="14" r=".6" fill="white" opacity=".7"/>
           <circle cx="10" cy="16" r=".4" fill="white" opacity=".5"/>
-          <!-- rainbow strip -->
           <defs>
             <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#ff3b3b"/>
-              <stop offset="25%" stop-color="#ffd700"/>
-              <stop offset="50%" stop-color="#44dd88"/>
-              <stop offset="75%" stop-color="#3b9eff"/>
+              <stop offset="0%"   stop-color="#ff3b3b"/>
+              <stop offset="25%"  stop-color="#ffd700"/>
+              <stop offset="50%"  stop-color="#44dd88"/>
+              <stop offset="75%"  stop-color="#3b9eff"/>
               <stop offset="100%" stop-color="#a855f7"/>
             </linearGradient>
           </defs>
@@ -491,146 +286,107 @@
       </div>
     </div>
     <div class="rainbow-bar"></div>
-    <p>Agente de Edição em Lote · BytePlus ModelArk · Seedream 4.5 / 5.0 · Export 5000px 300dpi</p>
+    <p>Agente de Edição em Lote · OpenAI GPT-5.5 · Responses API · Export 5000px 300dpi</p>
   </header>
 
   <!-- API BAR -->
   <div class="api-bar">
     <div class="status-dot" id="statusDot"></div>
     <label>API</label>
-    <input type="password" id="apiKeyDisplay" placeholder="Clique em Configurar → insira Key + URL do Worker" readonly>
+    <input type="password" id="apiKeyDisplay" placeholder="Clique em Configurar → API Key + URL do Worker" readonly>
     <button class="btn-sm" onclick="openModal()">Configurar</button>
   </div>
-  <!-- PROXY NOTICE (shown when not configured) -->
-  <div id="proxyNotice" style="
-    background: rgba(255,215,0,.06); border: 1px solid rgba(255,215,0,.25);
-    border-radius:8px; padding:12px 16px; margin-bottom:20px;
-    font-size:12px; color:#c8a800; line-height:1.7; display:none;
-  ">
-    <strong>⚠ Proxy não configurado</strong> — a API BytePlus bloqueia chamadas diretas do browser (CORS).<br>
-    1. Faça deploy do <code>worker.js</code> em <a href="https://dash.cloudflare.com" target="_blank" style="color:#3b9eff">dash.cloudflare.com → Workers &amp; Pages → Create Worker</a> (grátis, 30s)<br>
-    2. Copie a URL gerada (ex: <code>prisma-proxy.xxx.workers.dev/proxy</code>)<br>
-    3. Clique em <strong>Configurar</strong> acima e cole a URL + sua API Key
+
+  <!-- PROXY NOTICE -->
+  <div class="proxy-notice" id="proxyNotice">
+    <strong>⚠ Proxy não configurado</strong> — necessário para contornar CORS da API OpenAI.<br>
+    1. Deploy do <code>worker.js</code> em <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Workers</a> (grátis, ~1 min)<br>
+    2. Copie a URL gerada: ex <code>https://prisma-proxy.xxx.workers.dev</code><br>
+    3. Clique <strong>Configurar</strong> → cole <code>https://...workers.dev/proxy</code> + API Key
   </div>
 
-  <!-- DROP ZONE -->
-  <div class="section-label">01 &nbsp; Imagens</div>
+  <!-- 01 IMAGENS -->
+  <div class="section-label">01 &nbsp; Imagens de Referência</div>
   <div class="drop-zone" id="dropZone">
     <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
-    <div class="drop-icon">🖼️</div>
+    <div style="font-size:34px;margin-bottom:6px">🖼</div>
     <h3>Soltar Imagens Aqui</h3>
-    <p>Ou clique para selecionar arquivos</p>
+    <p>Ou clique para selecionar (JPG, PNG, WEBP, GIF...)</p>
     <div class="formats">
-      <span class="tag">JPG</span><span class="tag">PNG</span>
-      <span class="tag">WEBP</span><span class="tag">TIFF</span>
-      <span class="tag">BMP</span><span class="tag">GIF</span>
-      <span class="tag">HEIC</span><span class="tag">HEIF</span>
+      <span class="tag">JPG</span><span class="tag">PNG</span><span class="tag">WEBP</span>
+      <span class="tag">GIF</span><span class="tag">BMP</span><span class="tag">TIFF</span>
     </div>
   </div>
-
-  <!-- THUMBS -->
   <div class="thumbs-grid" id="thumbsGrid"></div>
 
-  <!-- CONTROLS -->
-  <div class="section-label">02 &nbsp; Parâmetros de Edição</div>
+  <!-- 02 PARÂMETROS -->
+  <div class="section-label">02 &nbsp; Parâmetros</div>
   <div class="controls-grid">
     <div class="control-card">
-      <h4>Modelo &amp; Modo</h4>
+      <div class="model-badge">GPT-5.5 · image_generation tool</div>
       <div class="field">
-        <label>Modelo Seedream</label>
-        <select id="modelSelect" onchange="onModelChange()">
-          <option value="seedream-4-5">Seedream 4.5 ★ Recomendado</option>
-          <option value="seedream-5-0-lite">Seedream 5.0 Lite ✦ Novo</option>
-          <option value="seedream-4-0">Seedream 4.0</option>
-          <option value="seededit-3-0-i2i">SeedEdit 3.0 i2i (edição fiel)</option>
-          <option value="seedream-3-0-t2i">Seedream 3.0 t2i (texto→img)</option>
+        <label>Tamanho de geração</label>
+        <select id="genSize">
+          <option value="1024x1024">1024×1024 — Quadrado</option>
+          <option value="1536x1024">1536×1024 — Landscape</option>
+          <option value="1024x1536">1024×1536 — Portrait</option>
+          <option value="auto">auto — modelo decide</option>
         </select>
       </div>
-      <div class="field" id="fieldBatchMode">
-        <label>Geração em Lote (sequential)</label>
-        <select id="seqMode">
-          <option value="disabled">disabled — 1 imagem por arquivo</option>
-          <option value="auto">auto — modelo decide a quantidade</option>
+      <div class="field">
+        <label>Qualidade</label>
+        <select id="genQuality">
+          <option value="high">high — máxima qualidade</option>
+          <option value="medium">medium — balanceado</option>
+          <option value="low">low — mais rápido</option>
         </select>
       </div>
-      <div class="field" id="fieldMaxImages" style="display:none">
-        <label>Máximo de imagens por input (1–15)</label>
-        <input type="number" id="maxImages" value="4" min="1" max="15" step="1">
-      </div>
-      <div class="field" id="fieldOptimize">
-        <label>Otimização de Prompt</label>
-        <select id="optimizeMode">
-          <option value="standard">standard — alta qualidade</option>
-          <option value="fast">fast — mais rápido</option>
-          <option value="none">none — desativado</option>
+      <div class="field">
+        <label>Reasoning Effort</label>
+        <select id="reasoningEffort">
+          <option value="medium">medium (padrão)</option>
+          <option value="high">high — mais detalhado</option>
+          <option value="low">low — mais rápido</option>
         </select>
-      </div>
-      <div class="field" id="fieldGuidance" style="display:none">
-        <label>Guidance Scale (1–10)</label>
-        <input type="number" id="guidance" value="5.5" min="1" max="10" step="0.5">
       </div>
     </div>
     <div class="control-card">
-      <h4>Tamanho &amp; Export</h4>
+      <h4>Export Final</h4>
       <div class="field">
-        <label>Resolução de Saída (API)</label>
-        <select id="sizePreset" onchange="onSizePresetChange()">
-          <option value="4096x4096">4K 1:1 — 4096×4096</option>
-          <option value="5504x3040">4K 16:9 — 5504×3040</option>
-          <option value="3040x5504">4K 9:16 — 3040×5504</option>
-          <option value="4704x3520">4K 4:3 — 4704×3520</option>
-          <option value="3520x4704">4K 3:4 — 3520×4704</option>
-          <option value="4992x3328">4K 3:2 — 4992×3328</option>
-          <option value="3328x4992">4K 2:3 — 3328×4992</option>
-          <option value="2K">2K — modelo define (prompt)</option>
-          <option value="4K">4K — modelo define (prompt)</option>
-        </select>
+        <label>Largura (px)</label>
+        <input type="number" id="outWidth"   value="5000" min="512" max="8192" step="64">
       </div>
       <div class="field">
-        <label>Watermark</label>
-        <select id="watermark">
-          <option value="false">Sem watermark</option>
-          <option value="true">Com watermark "AI generated"</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Export final — Largura (px)</label>
-        <input type="number" id="outWidth" value="5000" min="512" max="8192" step="64">
-      </div>
-      <div class="field">
-        <label>Export final — Altura (px)</label>
-        <input type="number" id="outHeight" value="5000" min="512" max="8192" step="64">
+        <label>Altura (px)</label>
+        <input type="number" id="outHeight"  value="5000" min="512" max="8192" step="64">
       </div>
       <div class="field">
         <label>DPI</label>
-        <input type="number" id="dpiVal" value="300" min="72" max="600" step="1">
+        <input type="number" id="dpiVal"     value="300"  min="72"  max="600"  step="1">
       </div>
       <div class="field">
         <label>Qualidade JPG (1–100)</label>
-        <input type="number" id="jpgQuality" value="95" min="1" max="100" step="1">
+        <input type="number" id="jpgQuality" value="95"   min="1"   max="100"  step="1">
       </div>
     </div>
   </div>
 
-  <!-- PROMPT -->
+  <!-- 03 PROMPT -->
   <div class="section-label">03 &nbsp; Prompt Criativo</div>
   <div class="prompt-card">
-    <h4>Instrução de Edição</h4>
+    <h4>Instrução para o GPT-5.5</h4>
     <div class="prompt-presets" id="presets"></div>
     <div class="field">
-      <label>Prompt — descreva o resultado desejado (máx. 600 palavras)</label>
-      <textarea id="promptPos" rows="4" placeholder="Ex: editorial fashion photography, dramatic cinematic lighting, ultra sharp, 4K resolution, professional retouching, luxury aesthetic, anamorphic lens..."></textarea>
+      <label>Prompt — descreva o resultado desejado (use "draw", "edit", "generate")</label>
+      <textarea id="promptText" rows="4"
+        placeholder="Ex: Retouch this portrait with cinematic lighting, enhance skin texture, add shallow depth of field bokeh, draw with ultra-sharp 4K professional quality..."></textarea>
     </div>
   </div>
 
   <!-- ACTIONS -->
   <div class="actions">
-    <button class="btn-primary" id="runBtn" onclick="runBatch()" disabled>
-      ▶ &nbsp; Processar Lote
-    </button>
-    <button class="btn-download" id="dlAllBtn" onclick="downloadAll()" disabled>
-      ↓ &nbsp; Baixar Tudo
-    </button>
+    <button class="btn-primary"  id="runBtn"   onclick="runBatch()"   disabled>▶ &nbsp; Processar Lote</button>
+    <button class="btn-download" id="dlAllBtn" onclick="downloadAll()" disabled>↓ &nbsp; Baixar Tudo</button>
   </div>
 
   <!-- PROGRESS -->
@@ -649,162 +405,93 @@
     <div class="results-grid" id="resultsGrid"></div>
   </div>
 
-</div>
+</div><!-- /app -->
 
 <script>
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════
-let apiKey      = '';
-let apiRegion   = 'ap-southeast-1';
-let proxyUrl    = '';          // Cloudflare Worker URL
-let files       = [];
-let results     = [];
-let isRunning   = false;
-
-// ─── Modelos que suportam image input ───
-const IMG_INPUT_MODELS   = ['seedream-4-5','seedream-5-0-lite','seedream-4-0','seededit-3-0-i2i'];
-// ─── Modelos que suportam sequential batch ───
-const BATCH_MODELS       = ['seedream-4-5','seedream-5-0-lite','seedream-4-0'];
-// ─── Modelos que suportam optimize_prompt ───
-const OPTIMIZE_MODELS    = ['seedream-4-5','seedream-5-0-lite','seedream-4-0'];
-// ─── Modelos com guidance_scale ───
-const GUIDANCE_MODELS    = ['seededit-3-0-i2i','seedream-3-0-t2i'];
-// ─── Modelo t2i puro (sem image input) ───
-const T2I_ONLY_MODELS    = ['seedream-3-0-t2i'];
-// ─── Tamanhos inválidos para Seedream 4.5 / 5 (min total pixels 3.686.400) ───
-const MIN_PIX_45 = 3686400;
+// ════════════════════════════════════════════════════
+let apiKey   = '';
+let proxyUrl = '';
+let files    = [];
+let results  = [];
+let isRunning = false;
 
 const PRESETS = [
-  { label: 'Fashion',     prompt: 'editorial fashion photography, dramatic cinematic lighting, ultra sharp, professional retouching, luxury aesthetic, 4K resolution, shallow depth of field' },
-  { label: 'Produto',     prompt: 'professional product photography, clean studio background, soft diffused lighting, commercial quality, ultra sharp product details, minimalist aesthetic' },
-  { label: 'Retrato',     prompt: 'portrait photography, soft bokeh background, golden hour lighting, natural skin texture, high-end magazine quality, Leica aesthetics' },
-  { label: 'Arquitetura', prompt: 'architectural photography, blue hour, dramatic sky, HDR details, ultra sharp geometry, professional real estate photography' },
-  { label: 'Natureza',    prompt: 'nature photography, golden hour, vibrant natural colors, ultra sharp, professional wildlife photography, National Geographic style' },
-  { label: 'Cinemático',  prompt: 'cinematic color grading, anamorphic lens flare, dramatic shadows, Hollywood production quality, film look, teal and orange palette' },
+  { label: 'Fashion',      p: 'Edit this photo with editorial fashion photography style, dramatic cinematic lighting, ultra sharp, professional retouching, luxury aesthetic' },
+  { label: 'Produto',      p: 'Generate a clean commercial product photography version of this image, soft studio lighting, white background, ultra sharp details' },
+  { label: 'Retrato',      p: 'Retouch this portrait with soft bokeh background, golden hour lighting, natural skin texture, high-end magazine quality' },
+  { label: 'Arquitetura',  p: 'Edit with architectural photography style, blue hour dramatic sky, HDR details, ultra sharp lines, professional real estate quality' },
+  { label: 'Cinemático',   p: 'Draw a cinematic version with dramatic color grading, anamorphic lens flare, deep shadows, Hollywood production quality' },
+  { label: 'Arte Digital',  p: 'Generate a digital art version, vibrant hyper-detailed illustration, concept art quality, ultra detailed textures' },
 ];
 
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  INIT
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  loadStoredKey();
+  loadConfig();
   buildPresets();
   setupDrop();
-  onModelChange();
-  // Show proxy notice if not yet configured
-  const p = localStorage.getItem('prisma_bp_proxy');
-  document.getElementById('proxyNotice').style.display = p ? 'none' : 'block';
 });
 
-function loadStoredKey() {
-  const k = localStorage.getItem('prisma_bp_key');
-  const r = localStorage.getItem('prisma_bp_region');
-  const p = localStorage.getItem('prisma_bp_proxy');
+function loadConfig() {
+  const k = localStorage.getItem('prisma_oai_key');
+  const p = localStorage.getItem('prisma_oai_proxy');
   if (k) {
-    apiKey    = k;
-    apiRegion = r || 'ap-southeast-1';
-    proxyUrl  = p || '';
-
-    const sel = document.getElementById('apiEndpoint');
-    if (r) for (let o of sel.options) { if (o.value === r) { sel.value = r; break; } }
-
+    apiKey   = k;
+    proxyUrl = p || '';
     if (p) document.getElementById('proxyUrl').value = p;
-
     document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-4);
-    document.getElementById('statusDot').classList.add('ok');
-    if (!p) document.getElementById('statusDot').classList.remove('ok'); // no proxy = not ready
+    if (k && p) {
+      document.getElementById('statusDot').classList.add('ok');
+      document.getElementById('proxyNotice').style.display = 'none';
+    }
     checkRunBtn();
   }
 }
 
 function buildPresets() {
   const c = document.getElementById('presets');
-  PRESETS.forEach(p => {
+  PRESETS.forEach(({ label, p }) => {
     const b = document.createElement('button');
-    b.className = 'preset-btn';
-    b.textContent = p.label;
-    b.onclick = () => { document.getElementById('promptPos').value = p.prompt; };
+    b.className = 'preset-btn'; b.textContent = label;
+    b.onclick = () => { document.getElementById('promptText').value = p; };
     c.appendChild(b);
   });
 }
 
-// ─── Show/hide controls based on model ───
-function onModelChange() {
-  const model = document.getElementById('modelSelect').value;
-  const isBatch   = BATCH_MODELS.includes(model);
-  const isOpt     = OPTIMIZE_MODELS.includes(model);
-  const isGuide   = GUIDANCE_MODELS.includes(model);
-  const isT2IOnly = T2I_ONLY_MODELS.includes(model);
-
-  document.getElementById('fieldBatchMode').style.display = isBatch   ? '' : 'none';
-  document.getElementById('fieldOptimize').style.display  = isOpt     ? '' : 'none';
-  document.getElementById('fieldGuidance').style.display  = isGuide   ? '' : 'none';
-
-  // t2i-only: hide drop zone hint for image reference
-  document.querySelector('.drop-zone p').textContent = isT2IOnly
-    ? 'Modo texto→imagem: imagens são usadas apenas como referência visual (opcional)'
-    : 'Ou clique para selecionar arquivos';
-
-  onSeqModeChange();
-}
-
-function onSeqModeChange() {
-  const seq = document.getElementById('seqMode')?.value;
-  const fi = document.getElementById('fieldMaxImages');
-  if (fi) fi.style.display = (seq === 'auto') ? '' : 'none';
-}
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('seqMode')?.addEventListener('change', onSeqModeChange);
-});
-
-function onSizePresetChange() {
-  const v = document.getElementById('sizePreset').value;
-  // Only pixel sizes: set export fields to match
-  if (v.includes('x')) {
-    const [w, h] = v.split('x').map(Number);
-    document.getElementById('outWidth').value  = w;
-    document.getElementById('outHeight').value = h;
-  }
-}
-
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  MODAL
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function openModal()  { document.getElementById('apiModal').classList.add('open'); }
 function closeModal() { document.getElementById('apiModal').classList.remove('open'); }
 
-function saveApiKey() {
+function saveConfig() {
   const k = document.getElementById('apiKeyInput').value.trim();
-  const r = document.getElementById('apiEndpoint').value.trim();
-  const p = document.getElementById('proxyUrl').value.trim();
+  const p = document.getElementById('proxyUrl').value.trim().replace(/\/$/, '');
+  if (!k)                     { alert('Insira a OpenAI API Key'); return; }
+  if (!p || !p.startsWith('http')) { alert('Insira a URL do Proxy (deve começar com https://)'); return; }
 
-  if (!k) { alert('Insira uma API Key válida'); return; }
-  if (!p) { alert('Insira a URL do Proxy (Cloudflare Worker).\nSiga as instruções no arquivo worker.js para fazer o deploy grátis.'); return; }
-  if (!p.startsWith('http')) { alert('Proxy URL inválida — deve começar com https://'); return; }
-
-  apiKey    = k;
-  apiRegion = r || 'ap-southeast-1';
-  proxyUrl  = p.replace(/\/$/, ''); // remove trailing slash
-
-  localStorage.setItem('prisma_bp_key',    k);
-  localStorage.setItem('prisma_bp_region', apiRegion);
-  localStorage.setItem('prisma_bp_proxy',  proxyUrl);
+  apiKey   = k;
+  proxyUrl = p;
+  localStorage.setItem('prisma_oai_key',   k);
+  localStorage.setItem('prisma_oai_proxy', p);
 
   document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-4);
   document.getElementById('statusDot').classList.add('ok');
   document.getElementById('proxyNotice').style.display = 'none';
   closeModal();
   checkRunBtn();
-  log(`✓ API configurada · região: ${apiRegion} · proxy: ${proxyUrl}`, 'ok');
+  log('✓ Configuração salva · GPT-5.5 pronto', 'ok');
 }
 
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  DRAG & DROP
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function setupDrop() {
   const dz = document.getElementById('dropZone');
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
   dz.addEventListener('drop', e => {
     e.preventDefault(); dz.classList.remove('drag-over');
@@ -813,9 +500,8 @@ function setupDrop() {
 }
 
 function handleFiles(fileList) {
-  const allowed = ['image/jpeg','image/png','image/webp','image/bmp','image/tiff','image/gif','image/heic','image/heif'];
-  const newFiles = Array.from(fileList).filter(f => allowed.includes(f.type) || f.type.startsWith('image/'));
-  files.push(...newFiles);
+  const ok = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  files.push(...ok);
   renderThumbs();
   checkRunBtn();
 }
@@ -826,78 +512,70 @@ function renderThumbs() {
   files.forEach((f, i) => {
     const url = URL.createObjectURL(f);
     const card = document.createElement('div');
-    card.className = 'thumb-card';
-    card.id = `thumb-${i}`;
+    card.className = 'thumb-card'; card.id = `thumb-${i}`;
     card.innerHTML = `
       <img src="${url}" alt="${f.name}">
       <div class="thumb-status"></div>
       <div class="thumb-name">${f.name}</div>
-      <div class="thumb-remove" onclick="removeFile(${i})">✕</div>
-    `;
+      <div class="thumb-remove" onclick="removeFile(${i})">✕</div>`;
     grid.appendChild(card);
   });
 }
 
-function removeFile(i) {
-  files.splice(i, 1);
-  renderThumbs();
-  checkRunBtn();
-}
+function removeFile(i) { files.splice(i, 1); renderThumbs(); checkRunBtn(); }
 
 function checkRunBtn() {
-  const btn = document.getElementById('runBtn');
-  btn.disabled = !(apiKey && proxyUrl && files.length > 0 && !isRunning);
+  document.getElementById('runBtn').disabled =
+    !(apiKey && proxyUrl && files.length > 0 && !isRunning);
 }
 
-// ═══════════════════════════════════════════════════
-//  LOGGING
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  LOG
+// ════════════════════════════════════════════════════
 function log(msg, type = 'info') {
   const box = document.getElementById('logBox');
-  const d   = document.createElement('div');
+  const d = document.createElement('div');
   d.className = `log-${type}`;
-  const t = new Date().toLocaleTimeString('pt-BR');
-  d.textContent = `[${t}] ${msg}`;
+  d.textContent = `[${new Date().toLocaleTimeString('pt-BR')}] ${msg}`;
   box.appendChild(d);
   box.scrollTop = box.scrollHeight;
   document.getElementById('progressSection').classList.add('visible');
 }
 
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  BATCH RUNNER
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 async function runBatch() {
-  if (isRunning || !apiKey || !files.length) return;
+  if (isRunning || !apiKey || !proxyUrl || !files.length) return;
   isRunning = true;
   results = [];
-  document.getElementById('runBtn').disabled = true;
-  document.getElementById('dlAllBtn').disabled = true;
+
+  document.getElementById('runBtn').disabled    = true;
+  document.getElementById('dlAllBtn').disabled  = true;
   document.getElementById('resultsSection').classList.remove('visible');
   document.getElementById('resultsGrid').innerHTML = '';
-  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('logBox').innerHTML  = '';
   document.getElementById('progressFill').style.width = '0%';
 
-  const total = files.length;
-  const model = document.getElementById('modelSelect').value;
-  log(`▶ Iniciando lote: ${total} arquivo(s) · modelo: ${model}`, 'info');
-  log(`  Proxy: ${proxyUrl} · região: ${apiRegion}`, 'info');
+  const total  = files.length;
+  const prompt = document.getElementById('promptText').value.trim()
+    || 'Edit this image with professional photography quality, ultra sharp, cinematic lighting';
+
+  log(`▶ Lote: ${total} arquivo(s) · GPT-5.5 · image_generation tool`, 'info');
 
   for (let i = 0; i < files.length; i++) {
     const f    = files[i];
     const card = document.getElementById(`thumb-${i}`);
     if (card) card.classList.add('processing');
-    log(`[${i+1}/${total}] Processando: ${f.name} (${(f.size/1024).toFixed(0)} KB)`, 'info');
+    log(`[${i+1}/${total}] ${f.name} (${(f.size/1024).toFixed(0)} KB)`, 'info');
 
     try {
-      const apiImages = await callSeedreamAPI(f);
-      for (let j = 0; j < apiImages.length; j++) {
-        const blob = await upscaleAndExport(apiImages[j]);
-        const suffix = apiImages.length > 1 ? `_v${j+1}` : '';
-        results.push({ name: f.name, blob, suffix });
-        addResult(blob, f.name, suffix);
-      }
+      const blob = await callGPT55(f, prompt);
+      const final = await upscaleAndExport(blob);
+      results.push({ name: f.name, blob: final });
       if (card) { card.classList.remove('processing'); card.classList.add('done'); }
-      log(`[${i+1}/${total}] ✓ ${f.name} → ${apiImages.length} imagem(ns) gerada(s)`, 'ok');
+      log(`[${i+1}/${total}] ✓ ${f.name}`, 'ok');
+      addResult(final, f.name);
     } catch (err) {
       if (card) { card.classList.remove('processing'); card.classList.add('error'); }
       log(`[${i+1}/${total}] ✗ ${f.name}: ${err.message}`, 'err');
@@ -913,169 +591,144 @@ async function runBatch() {
   if (results.length) {
     document.getElementById('dlAllBtn').disabled = false;
     document.getElementById('resultsSection').classList.add('visible');
-    log(`✓ Lote concluído! ${results.length} imagem(ns) prontas para download.`, 'ok');
+    log(`✓ Lote concluído — ${results.length} imagem(ns) prontas!`, 'ok');
   }
 }
 
-// ═══════════════════════════════════════════════════
-//  SEEDREAM API — BytePlus ModelArk
-//  POST {endpoint}/images/generations
-// ═══════════════════════════════════════════════════
-async function callSeedreamAPI(file) {
-  const model        = document.getElementById('modelSelect').value;
-  const prompt       = document.getElementById('promptPos').value.trim() || 'high quality professional photography, ultra sharp, cinematic lighting';
-  const sizePreset   = document.getElementById('sizePreset').value;
-  const seqMode      = document.getElementById('seqMode')?.value || 'disabled';
-  const maxImages    = parseInt(document.getElementById('maxImages')?.value || 4);
-  const optimizeMode = document.getElementById('optimizeMode')?.value || 'standard';
-  const watermark    = document.getElementById('watermark').value === 'true';
+// ════════════════════════════════════════════════════
+//  OPENAI RESPONSES API  —  GPT-5.5 + image_generation
+//
+//  POST /v1/responses
+//  {
+//    model: "gpt-5.5",
+//    input: [ { role:"user", content: [ {type:"input_image",...}, {type:"input_text",...} ] } ],
+//    tools: [ { type: "image_generation", size, quality } ],
+//    reasoning: { effort }
+//  }
+//  Response: output[] → filter type=="image_generation_call" → .result (base64 PNG)
+// ════════════════════════════════════════════════════
+async function callGPT55(file, prompt) {
+  const genSize     = document.getElementById('genSize').value;
+  const genQuality  = document.getElementById('genQuality').value;
+  const reasoning   = document.getElementById('reasoningEffort').value;
 
-  // ── Determine size param ──────────────────────────
-  // Values '2K' / '4K' go directly; pixel sizes go as "WxH"
-  const sizeParam = sizePreset; // already in correct format for the API
+  // Convert image to base64 data URL
+  const dataUrl = await fileToDataURL(file);
+  // Extract base64 and media type
+  const [meta, b64data] = dataUrl.split(',');
+  const mimeMatch = meta.match(/data:([^;]+)/);
+  const mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
 
-  // ── Validate pixel size for seedream-4-5 / 5-0-lite ──
-  if (['seedream-4-5','seedream-5-0-lite'].includes(model) && sizePreset.includes('x')) {
-    const [w, h] = sizePreset.split('x').map(Number);
-    if (w * h < MIN_PIX_45) {
-      throw new Error(`Tamanho ${sizePreset} inválido para ${model}: mínimo 3.686.400 px total. Escolha 4K ou maior.`);
-    }
-  }
-
-  // ── Build payload ─────────────────────────────────
+  // Build Responses API payload
+  // image_generation tool is invoked when GPT-5.5 decides to call it based on the prompt
   const payload = {
-    model,
-    prompt,
-    response_format: 'url',   // receive URL, we then fetch the blob
-    watermark,
+    model: 'gpt-5.5',
+    input: [
+      {
+        role: 'user',
+        content: [
+          // Reference image
+          {
+            type:       'input_image',
+            image_url:  dataUrl,          // data URI accepted by the API
+          },
+          // Text instruction
+          {
+            type: 'input_text',
+            text: prompt,
+          },
+        ],
+      },
+    ],
+    tools: [
+      {
+        type:    'image_generation',
+        size:    genSize,
+        quality: genQuality,
+      },
+    ],
+    reasoning: { effort: reasoning },
   };
 
-  // Size — only pixel or keyword sizes
-  payload.size = sizeParam;
+  log(`  → model=gpt-5.5 size=${genSize} quality=${genQuality} reasoning=${reasoning}`, 'info');
 
-  // Guidance scale — only for seededit / seedream-3
-  if (GUIDANCE_MODELS.includes(model)) {
-    payload.guidance_scale = parseFloat(document.getElementById('guidance').value);
-  }
-
-  // Optimize prompt — seedream-4+
-  if (OPTIMIZE_MODELS.includes(model) && optimizeMode !== 'none') {
-    payload.optimize_prompt_options = { mode: optimizeMode };
-  }
-
-  // Sequential batch generation — seedream-4+
-  if (BATCH_MODELS.includes(model)) {
-    payload.sequential_image_generation = seqMode;
-    if (seqMode === 'auto') {
-      payload.sequential_image_generation_options = { max_images: maxImages };
-    }
-  }
-
-  // Image input (base64 with data URI prefix) — all except t2i-only
-  if (!T2I_ONLY_MODELS.includes(model)) {
-    const b64full = await fileToBase64Full(file); // includes data:image/...;base64, prefix
-    payload.image = b64full;
-  }
-
-  log(`  → Payload: model=${model} size=${sizeParam} seq=${seqMode} optimize=${optimizeMode}`, 'info');
-
-  // ── Fire request via Cloudflare Worker proxy ──────
-  // The Worker forwards to BytePlus, adding correct CORS headers server-side
-  if (!proxyUrl) throw new Error('Proxy URL não configurada. Abra Configurar e insira a URL do Worker.');
-
-  const resp = await fetch(`${proxyUrl}`, {
-    method: 'POST',
+  const resp = await fetch(proxyUrl, {
+    method:  'POST',
     headers: {
       'Content-Type':  'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'X-Region':      apiRegion,           // Worker uses this to pick the right endpoint
     },
     body: JSON.stringify(payload),
   });
 
   const raw = await resp.text();
-
   if (!resp.ok) {
-    let msg = raw.slice(0, 200);
-    try {
-      const j = JSON.parse(raw);
-      msg = j?.error?.message || j?.message || msg;
-    } catch(_) {}
+    let msg = raw.slice(0, 300);
+    try { const j = JSON.parse(raw); msg = j?.error?.message || msg; } catch(_) {}
     throw new Error(`HTTP ${resp.status}: ${msg}`);
   }
 
   const data = JSON.parse(raw);
 
-  // ── Error at request level ────────────────────────
-  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  // Extract image_generation_call blocks from output[]
+  const imgBlocks = (data.output || []).filter(o => o.type === 'image_generation_call');
 
-  // ── Collect image URLs from data[] ────────────────
-  const items = data.data || [];
-  if (!items.length) throw new Error('API retornou data[] vazio.');
-
-  const blobs = [];
-  for (const item of items) {
-    if (item.error) {
-      log(`  ⚠ Imagem ignorada — content filter: ${item.error.message}`, 'err');
-      continue;
-    }
-    if (item.url) {
-      const imgResp = await fetch(item.url);
-      if (!imgResp.ok) throw new Error(`Falha ao baixar imagem gerada (${imgResp.status})`);
-      blobs.push(await imgResp.blob());
-    } else if (item.b64_json) {
-      blobs.push(b64ToBlob(item.b64_json, 'image/jpeg'));
-    }
+  if (!imgBlocks.length) {
+    // Fallback: sometimes the model returns output_text instead of calling the tool
+    // Log what we got and give a helpful message
+    const textOut = (data.output || []).filter(o => o.type === 'message' || o.type === 'text');
+    const textContent = textOut.map(o => {
+      if (o.content) return o.content.map(c => c.text || '').join('');
+      return o.text || '';
+    }).join(' ').slice(0, 200);
+    if (textContent) log(`  ℹ GPT respondeu: "${textContent}"`, 'warn');
+    throw new Error('GPT-5.5 não gerou imagem. Adicione "draw", "generate" ou "edit" no prompt para acionar a tool.');
   }
 
-  if (!blobs.length) throw new Error('Nenhuma imagem válida retornada pela API.');
+  // Use first generated image
+  const b64 = imgBlocks[0].result;
+  if (!b64) throw new Error('image_generation_call sem resultado base64');
 
-  const usage = data.usage;
-  if (usage) log(`  ℹ tokens: ${usage.total_tokens} · imagens geradas: ${usage.generated_images}`, 'info');
+  // Log revised prompt if available
+  if (imgBlocks[0].revised_prompt) {
+    log(`  ℹ prompt revisado: "${imgBlocks[0].revised_prompt.slice(0, 80)}..."`, 'info');
+  }
 
-  return blobs;
+  return b64ToBlob(b64, 'image/png');
 }
 
-// ═══════════════════════════════════════════════════
-//  UPSCALE + DPI BAKING  (canvas → JPEG 5000px 300dpi)
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  UPSCALE + DPI  (canvas → JPEG 5000px 300dpi)
+// ════════════════════════════════════════════════════
 function upscaleAndExport(blob) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
-      const targetW = parseInt(document.getElementById('outWidth').value)  || 5000;
-      const targetH = parseInt(document.getElementById('outHeight').value) || 5000;
-      const dpi     = parseInt(document.getElementById('dpiVal').value)    || 300;
+      const W       = parseInt(document.getElementById('outWidth').value)   || 5000;
+      const H       = parseInt(document.getElementById('outHeight').value)  || 5000;
+      const dpi     = parseInt(document.getElementById('dpiVal').value)     || 300;
       const quality = parseInt(document.getElementById('jpgQuality').value) / 100;
 
-      // Preserve aspect ratio from source
-      const srcRatio = img.naturalWidth / img.naturalHeight;
-      let drawW = targetW, drawH = targetH;
-      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-        const tgtRatio = targetW / targetH;
-        if (srcRatio > tgtRatio) {
-          drawH = Math.round(targetW / srcRatio);
-        } else {
-          drawW = Math.round(targetH * srcRatio);
-        }
-      }
-      const offsetX = Math.round((targetW - drawW) / 2);
-      const offsetY = Math.round((targetH - drawH) / 2);
+      // Preserve aspect ratio (letterbox)
+      const srcR = img.naturalWidth / img.naturalHeight;
+      const tgtR = W / H;
+      let dw = W, dh = H;
+      if (srcR > tgtR) { dh = Math.round(W / srcR); } else { dw = Math.round(H * srcR); }
+      const ox = Math.round((W - dw) / 2);
+      const oy = Math.round((H - dh) / 2);
 
       const canvas = document.createElement('canvas');
-      canvas.width  = targetW;
-      canvas.height = targetH;
+      canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext('2d');
-
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, targetW, targetH);
-      ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+      ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(img, ox, oy, dw, dh);
       URL.revokeObjectURL(url);
 
-      canvas.toBlob(outBlob => {
-        if (!outBlob) { reject(new Error('Canvas export falhou')); return; }
-        injectDPI(outBlob, dpi).then(resolve).catch(reject);
+      canvas.toBlob(out => {
+        if (!out) { reject(new Error('Canvas export falhou')); return; }
+        injectDPI(out, dpi).then(resolve).catch(reject);
       }, 'image/jpeg', quality);
     };
     img.onerror = () => reject(new Error('Falha ao carregar imagem para upscale'));
@@ -1083,33 +736,27 @@ function upscaleAndExport(blob) {
   });
 }
 
-// ─── Inject DPI into JPEG JFIF APP0 header ────────
 async function injectDPI(blob, dpi) {
-  const buf = await blob.arrayBuffer();
-  const arr = new Uint8Array(buf);
-  // Locate FF E0 (JFIF APP0)
+  const arr = new Uint8Array(await blob.arrayBuffer());
   for (let i = 0; i < arr.length - 15; i++) {
     if (arr[i] === 0xFF && arr[i+1] === 0xE0) {
-      // [i+11]=units, [i+12..13]=Xdensity, [i+14..15]=Ydensity
-      arr[i+11] = 1; // 1 = DPI
-      arr[i+12] = (dpi >> 8) & 0xFF;
-      arr[i+13] =  dpi       & 0xFF;
-      arr[i+14] = (dpi >> 8) & 0xFF;
-      arr[i+15] =  dpi       & 0xFF;
+      arr[i+11] = 1;                          // units = DPI
+      arr[i+12] = (dpi >> 8) & 0xFF; arr[i+13] = dpi & 0xFF; // X
+      arr[i+14] = (dpi >> 8) & 0xFF; arr[i+15] = dpi & 0xFF; // Y
       break;
     }
   }
   return new Blob([arr], { type: 'image/jpeg' });
 }
 
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  RESULTS
-// ═══════════════════════════════════════════════════
-function addResult(blob, name, suffix) {
+// ════════════════════════════════════════════════════
+function addResult(blob, name) {
   const grid    = document.getElementById('resultsGrid');
   const objUrl  = URL.createObjectURL(blob);
-  const base    = name.replace(/\.[^.]+$/, '');
-  const outName = `${base}${suffix}_prisma_${document.getElementById('outWidth').value}px.jpg`;
+  const W       = document.getElementById('outWidth').value;
+  const outName = name.replace(/\.[^.]+$/, '') + `_prisma_gpt55_${W}px.jpg`;
 
   const card = document.createElement('div');
   card.className = 'result-card';
@@ -1118,8 +765,7 @@ function addResult(blob, name, suffix) {
     <div class="result-card-info">
       <p title="${outName}">${outName}</p>
       <button onclick="downloadSingle('${objUrl}','${outName}')">↓ Baixar JPG</button>
-    </div>
-  `;
+    </div>`;
   grid.appendChild(card);
 }
 
@@ -1131,38 +777,34 @@ function downloadSingle(url, name) {
 
 async function downloadAll() {
   if (!results.length) return;
-  log(`⬇ Baixando ${results.length} arquivo(s)...`, 'info');
   const W = document.getElementById('outWidth').value;
+  log(`⬇ Baixando ${results.length} arquivo(s)...`, 'info');
   for (const r of results) {
-    const objUrl  = URL.createObjectURL(r.blob);
-    const base    = r.name.replace(/\.[^.]+$/, '');
-    const outName = `${base}${r.suffix}_prisma_${W}px.jpg`;
-    downloadSingle(objUrl, outName);
+    const u = URL.createObjectURL(r.blob);
+    downloadSingle(u, r.name.replace(/\.[^.]+$/, '') + `_prisma_gpt55_${W}px.jpg`);
     await new Promise(res => setTimeout(res, 450));
-    URL.revokeObjectURL(objUrl);
+    URL.revokeObjectURL(u);
   }
-  log('✓ Todos os arquivos baixados com sucesso!', 'ok');
+  log('✓ Todos os arquivos baixados!', 'ok');
 }
 
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  UTILS
-// ═══════════════════════════════════════════════════
-// Returns full data URI: data:image/<type>;base64,<data>
-// Required by BytePlus API docs
-function fileToBase64Full(file) {
-  return new Promise((resolve, reject) => {
+// ════════════════════════════════════════════════════
+function fileToDataURL(file) {
+  return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload = () => resolve(r.result); // includes data:... prefix
-    r.onerror = reject;
+    r.onload = () => res(r.result);
+    r.onerror = rej;
     r.readAsDataURL(file);
   });
 }
 
-function b64ToBlob(b64, mimeType) {
+function b64ToBlob(b64, mime) {
   const bin = atob(b64);
   const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return new Blob([arr], { type: mimeType });
+  return new Blob([arr], { type: mime });
 }
 </script>
 </body>
