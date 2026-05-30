@@ -436,15 +436,19 @@
     <button class="modal-close" onclick="closeModal()">✕</button>
     <h2>API Config</h2>
     <p>
-      Insira sua chave da <strong style="color:var(--silver)">Seedream API — BytePlus ModelArk</strong>.<br>
-      Obtenha sua chave em <a href="https://console.byteplus.com/ark/region:ark+ap-southeast-1/apiKey" target="_blank">console.byteplus.com → API Key</a><br><br>
-      Selecione a região mais próxima de você. <em>A chave é salva localmente e nunca enviada a terceiros.</em>
+      Chave da <strong style="color:var(--silver)">Seedream API — BytePlus ModelArk</strong>.<br>
+      Obtenha em <a href="https://console.byteplus.com/ark/region:ark+ap-southeast-1/apiKey" target="_blank">console.byteplus.com → API Key</a><br><br>
+      <strong style="color:var(--accent-y)">⚠ Proxy obrigatório</strong> — a API BytePlus bloqueia chamadas diretas do browser (CORS).<br>
+      Deploy grátis do proxy em <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Workers</a> usando o arquivo <code style="color:var(--accent-b)">worker.js</code> incluído.<br>
+      <em style="color:var(--text-dim)">A chave fica salva apenas no seu navegador.</em>
     </p>
     <div class="modal-field">
-      <label>REGIÃO / ENDPOINT</label>
+      <label>PROXY URL (Cloudflare Worker)</label>
+      <input type="text" id="proxyUrl" placeholder="https://prisma-proxy.SEU_USER.workers.dev/proxy" autocomplete="off">
+      <label>REGIÃO BYTEPLUS</label>
       <select id="apiEndpoint" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--silver);font-family:var(--font-body);font-size:13px;outline:none;margin-bottom:16px;appearance:none;">
-        <option value="https://ark.ap-southeast.bytepluses.com/api/v3">ap-southeast-1 — Ásia/Pacífico (padrão)</option>
-        <option value="https://ark.eu-west.bytepluses.com/api/v3">eu-west-1 — Europa Ocidental</option>
+        <option value="ap-southeast-1">ap-southeast-1 — Ásia/Pacífico (padrão)</option>
+        <option value="eu-west-1">eu-west-1 — Europa Ocidental</option>
       </select>
       <label>SECRET API KEY</label>
       <input type="password" id="apiKeyInput" placeholder="••••••••••••••••••••••••••••••••">
@@ -494,8 +498,19 @@
   <div class="api-bar">
     <div class="status-dot" id="statusDot"></div>
     <label>API</label>
-    <input type="password" id="apiKeyDisplay" placeholder="Chave não configurada — clique em Configurar" readonly>
+    <input type="password" id="apiKeyDisplay" placeholder="Clique em Configurar → insira Key + URL do Worker" readonly>
     <button class="btn-sm" onclick="openModal()">Configurar</button>
+  </div>
+  <!-- PROXY NOTICE (shown when not configured) -->
+  <div id="proxyNotice" style="
+    background: rgba(255,215,0,.06); border: 1px solid rgba(255,215,0,.25);
+    border-radius:8px; padding:12px 16px; margin-bottom:20px;
+    font-size:12px; color:#c8a800; line-height:1.7; display:none;
+  ">
+    <strong>⚠ Proxy não configurado</strong> — a API BytePlus bloqueia chamadas diretas do browser (CORS).<br>
+    1. Faça deploy do <code>worker.js</code> em <a href="https://dash.cloudflare.com" target="_blank" style="color:#3b9eff">dash.cloudflare.com → Workers &amp; Pages → Create Worker</a> (grátis, 30s)<br>
+    2. Copie a URL gerada (ex: <code>prisma-proxy.xxx.workers.dev/proxy</code>)<br>
+    3. Clique em <strong>Configurar</strong> acima e cole a URL + sua API Key
   </div>
 
   <!-- DROP ZONE -->
@@ -640,11 +655,12 @@
 // ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
-let apiKey = '';
-let apiEndpoint = 'https://ark.ap-southeast.bytepluses.com/api/v3';
-let files = [];
-let results = [];
-let isRunning = false;
+let apiKey      = '';
+let apiRegion   = 'ap-southeast-1';
+let proxyUrl    = '';          // Cloudflare Worker URL
+let files       = [];
+let results     = [];
+let isRunning   = false;
 
 // ─── Modelos que suportam image input ───
 const IMG_INPUT_MODELS   = ['seedream-4-5','seedream-5-0-lite','seedream-4-0','seededit-3-0-i2i'];
@@ -675,22 +691,29 @@ window.addEventListener('DOMContentLoaded', () => {
   loadStoredKey();
   buildPresets();
   setupDrop();
-  onModelChange(); // sync UI to default model
+  onModelChange();
+  // Show proxy notice if not yet configured
+  const p = localStorage.getItem('prisma_bp_proxy');
+  document.getElementById('proxyNotice').style.display = p ? 'none' : 'block';
 });
 
 function loadStoredKey() {
   const k = localStorage.getItem('prisma_bp_key');
-  const e = localStorage.getItem('prisma_bp_endpoint');
+  const r = localStorage.getItem('prisma_bp_region');
+  const p = localStorage.getItem('prisma_bp_proxy');
   if (k) {
-    apiKey = k;
-    if (e) {
-      apiEndpoint = e;
-      const sel = document.getElementById('apiEndpoint');
-      // set select value if option exists
-      for (let opt of sel.options) { if (opt.value === e) { sel.value = e; break; } }
-    }
+    apiKey    = k;
+    apiRegion = r || 'ap-southeast-1';
+    proxyUrl  = p || '';
+
+    const sel = document.getElementById('apiEndpoint');
+    if (r) for (let o of sel.options) { if (o.value === r) { sel.value = r; break; } }
+
+    if (p) document.getElementById('proxyUrl').value = p;
+
     document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-4);
     document.getElementById('statusDot').classList.add('ok');
+    if (!p) document.getElementById('statusDot').classList.remove('ok'); // no proxy = not ready
     checkRunBtn();
   }
 }
@@ -753,17 +776,27 @@ function closeModal() { document.getElementById('apiModal').classList.remove('op
 
 function saveApiKey() {
   const k = document.getElementById('apiKeyInput').value.trim();
-  const e = document.getElementById('apiEndpoint').value.trim();
-  if (!k) { alert('Insira uma chave válida'); return; }
-  apiKey = k;
-  apiEndpoint = e || 'https://ark.ap-southeast.bytepluses.com/api/v3';
-  localStorage.setItem('prisma_bp_key', k);
-  localStorage.setItem('prisma_bp_endpoint', apiEndpoint);
+  const r = document.getElementById('apiEndpoint').value.trim();
+  const p = document.getElementById('proxyUrl').value.trim();
+
+  if (!k) { alert('Insira uma API Key válida'); return; }
+  if (!p) { alert('Insira a URL do Proxy (Cloudflare Worker).\nSiga as instruções no arquivo worker.js para fazer o deploy grátis.'); return; }
+  if (!p.startsWith('http')) { alert('Proxy URL inválida — deve começar com https://'); return; }
+
+  apiKey    = k;
+  apiRegion = r || 'ap-southeast-1';
+  proxyUrl  = p.replace(/\/$/, ''); // remove trailing slash
+
+  localStorage.setItem('prisma_bp_key',    k);
+  localStorage.setItem('prisma_bp_region', apiRegion);
+  localStorage.setItem('prisma_bp_proxy',  proxyUrl);
+
   document.getElementById('apiKeyDisplay').value = '••••••••••••' + k.slice(-4);
   document.getElementById('statusDot').classList.add('ok');
+  document.getElementById('proxyNotice').style.display = 'none';
   closeModal();
   checkRunBtn();
-  log('API BytePlus / Seedream configurada com sucesso ✓', 'ok');
+  log(`✓ API configurada · região: ${apiRegion} · proxy: ${proxyUrl}`, 'ok');
 }
 
 // ═══════════════════════════════════════════════════
@@ -813,7 +846,7 @@ function removeFile(i) {
 
 function checkRunBtn() {
   const btn = document.getElementById('runBtn');
-  btn.disabled = !(apiKey && files.length > 0 && !isRunning);
+  btn.disabled = !(apiKey && proxyUrl && files.length > 0 && !isRunning);
 }
 
 // ═══════════════════════════════════════════════════
@@ -847,7 +880,7 @@ async function runBatch() {
   const total = files.length;
   const model = document.getElementById('modelSelect').value;
   log(`▶ Iniciando lote: ${total} arquivo(s) · modelo: ${model}`, 'info');
-  log(`  Endpoint: ${apiEndpoint}`, 'info');
+  log(`  Proxy: ${proxyUrl} · região: ${apiRegion}`, 'info');
 
   for (let i = 0; i < files.length; i++) {
     const f    = files[i];
@@ -946,12 +979,16 @@ async function callSeedreamAPI(file) {
 
   log(`  → Payload: model=${model} size=${sizeParam} seq=${seqMode} optimize=${optimizeMode}`, 'info');
 
-  // ── Fire request ──────────────────────────────────
-  const resp = await fetch(`${apiEndpoint}/images/generations`, {
+  // ── Fire request via Cloudflare Worker proxy ──────
+  // The Worker forwards to BytePlus, adding correct CORS headers server-side
+  if (!proxyUrl) throw new Error('Proxy URL não configurada. Abra Configurar e insira a URL do Worker.');
+
+  const resp = await fetch(`${proxyUrl}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
       'Authorization': `Bearer ${apiKey}`,
+      'X-Region':      apiRegion,           // Worker uses this to pick the right endpoint
     },
     body: JSON.stringify(payload),
   });
